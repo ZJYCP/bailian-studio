@@ -96,6 +96,7 @@ curl http://127.0.0.1:8080/api/health
 
 说明：
 
+- **国内构建源已内置**：镜像构建走 goproxy.cn（Go 模块）、npmmirror（npm）、阿里云镜像（alpine apk），国内服务器直接 `--build` 不会卡在依赖下载；服务器在海外时可用 `--build-arg GOPROXY_MIRROR=https://proxy.golang.org,direct --build-arg NPM_REGISTRY=https://registry.npmjs.org --build-arg ALPINE_MIRROR=https://dl-cdn.alpinelinux.org` 切回官方源
 - 镜像为多阶段构建（node 构建前端 → go 构建后端并 embed → alpine 运行），约 53MB；服务器是 x86 时在 Mac（arm64）上需 `docker buildx build --platform linux/amd64`
 - 数据落两个 docker volume：`pgdata-prod`（库）与 `appdata`（上传素材/生成产物），`docker compose down` 不会丢；备份即备份这两个 volume
 - 防火墙/安全组只需放行 `APP_PORT`；PostgreSQL 不对宿主机暴露端口
