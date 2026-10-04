@@ -2,6 +2,24 @@
 
 本地自用的阿里云百炼（DashScope）AIGC 创作与管理平台。通过 Web 页面调用和管理百炼的 **图像生成/编辑、视频生成、语音合成（TTS，含声音复刻）** 能力，全部参数按百炼官方 API 支持。
 
+## 界面预览
+
+<p align="center">
+  <img src="docs/images/studio-image.png" alt="创作中心（图像）" width="880">
+</p>
+<p align="center"><sub>创作中心：模型选择 → 提示词 → 参数表单，右侧实时展示任务进度与生成结果</sub></p>
+
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="docs/images/tasks.png" alt="任务列表"><sub>任务列表：状态筛选 / 参数回显 / 重试取消</sub></td>
+    <td width="50%" align="center"><img src="docs/images/assets.png" alt="资产库"><sub>资产库：生成产物画廊，本地持久化</sub></td>
+  </tr>
+  <tr>
+    <td width="50%" align="center"><img src="docs/images/models.png" alt="模型管理"><sub>模型管理：33 个内置模型可启停 / 设默认</sub></td>
+    <td width="50%" align="center"><img src="docs/images/settings.png" alt="设置"><sub>设置：多服务配置 + 连通性测试 + 声音复刻</sub></td>
+  </tr>
+</table>
+
 ## 功能
 
 - **创作中心**：图像（文生图/图片编辑）、视频（文生/图生/参考生）、语音（TTS）三大能力，模型与参数表单由模型目录的 JSON Schema 驱动，不同模型展示不同参数（尺寸/负向词/seed/水印/分辨率/比例/时长/音色/语速/音调/情感指令/SSML 等）
