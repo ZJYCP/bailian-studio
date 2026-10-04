@@ -1,0 +1,40 @@
+# 线上部署编排：docker compose -f docker-compose.prod.yml up -d --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      # ⚠️ 部署前务必修改密码（与下方 DATABASE_URL 保持一致）
+      POSTGRES_USER: bailian
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_pg_pwd}
+      POSTGRES_DB: bailian_studio
+    volumes:
+      - pgdata-prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bailian -d bailian_studio"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    # 不对宿主机暴露端口，仅供 app 经内部网络访问
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      DATABASE_URL: postgres://bailian:${POSTGRES_PASSWORD:-changeme_pg_pwd}@postgres:5432/bailian_studio?sslmode=disable
+      DATA_DIR: /data
+      # ⚠️ 访问口令：不设置则任何知道地址的人都能使用你的 API Key
+      ACCESS_TOKEN: ${ACCESS_TOKEN:-}
+      GIN_MODE: release
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - appdata:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata-prod:
+  appdata:

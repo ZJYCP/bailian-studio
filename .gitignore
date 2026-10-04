@@ -1,0 +1,19 @@
+# 数据与产物
+data/
+bin/
+*.log
+
+# Go
+server/tmp/
+
+# 前端
+web/node_modules/
+web/dist/
+
+# 嵌入前端的构建产物（make build / Dockerfile 会重新生成，仅保留编译占位）
+server/cmd/server/frontend/*
+!server/cmd/server/frontend/.placeholder
+
+# 系统
+.DS_Store
+.env

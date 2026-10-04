@@ -1,0 +1,8 @@
+data/
+bin/
+server/cmd/server/frontend/
+web/node_modules/
+web/dist/
+*.log
+.DS_Store
+.git/

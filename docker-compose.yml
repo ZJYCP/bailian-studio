@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bailian-studio-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bailian
+      POSTGRES_PASSWORD: bailian123
+      POSTGRES_DB: bailian_studio
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bailian -d bailian_studio"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
