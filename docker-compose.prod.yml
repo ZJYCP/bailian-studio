@@ -18,6 +18,8 @@ services:
     # 不对宿主机暴露端口，仅供 app 经内部网络访问
 
   app:
+    # 优先拉取 GHCR 预构建镜像（CI 自动发布）；删除 image: 则回退为本地构建
+    image: ghcr.io/zjycp/bailian-studio:latest
     build: .
     restart: unless-stopped
     ports:
