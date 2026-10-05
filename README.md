@@ -85,16 +85,18 @@ DATA_DIR=./data ./bin/bailian-studio   # http://127.0.0.1:8080
 
 > ⚠️ 部署前必读：平台默认无登录。**只要端口对公网/内网开放，就必须设置 `ACCESS_TOKEN`**，否则任何知道地址的人都能消耗你的百炼额度。API Key 明文存于数据库，请勿让 PostgreSQL 端口对公网暴露（生产 compose 已默认只走内部网络）。
 
-### 方式一：Docker Compose（推荐）
+### 方式一：GHCR 预构建镜像（推荐，服务器免构建）
 
-在服务器上（需安装 Docker）：
+每次推送 main 分支，GitHub Actions 自动构建镜像发布到 **ghcr.io/zjycp/bailian-studio**（打 `v*` 标签会额外出版本号镜像）。服务器只需拉取：
 
 ```bash
-# 1. 同步代码到服务器
-rsync -av --exclude data --exclude bin --exclude web/node_modules \
-      ./bailian-studio/ user@your-server:/opt/bailian-studio/
+# 1. 登录 ghcr.io（私有镜像需要）
+#    Token 创建：GitHub → Settings → Developer settings → Personal access tokens (classic)
+#    勾选 read:packages
+echo "你的PAT" | docker login ghcr.io -u ZJYCP --password-stdin
 
-# 2. 在服务器上配置口令与数据库密码
+# 2. 取代码（只需 compose 与 .env）
+git clone https://github.com/ZJYCP/bailian-studio.git /opt/bailian-studio
 cd /opt/bailian-studio
 cat > .env <<'EOF'
 ACCESS_TOKEN=换成一个足够长的随机口令
@@ -103,23 +105,42 @@ APP_PORT=8080
 TZ=Asia/Shanghai
 EOF
 
-# 3. 构建并启动（前端+后端在镜像内完成构建）
-docker compose -f docker-compose.prod.yml up -d --build
+# 3. 拉取镜像并启动（不在服务器上构建）
+docker compose -f docker-compose.prod.yml pull app
+docker compose -f docker-compose.prod.yml up -d
 
 # 4. 验证
 curl http://127.0.0.1:8080/api/health
 ```
 
-浏览器打开 `http://服务器IP:8080`，输入访问口令解锁，再到「设置」里配置百炼 apiUrl + API Key。
+日常更新：`git pull && docker compose -f docker-compose.prod.yml pull app && docker compose -f docker-compose.prod.yml up -d`。
+
+说明：
+
+- **镜像可见性**：跟随仓库为私有，拉取需上面的 PAT 登录；若想免登录拉取（不推荐），可在 GitHub 仓库右侧 Packages → 该镜像 → Package settings → Change visibility 改为 public
+- **国内拉取慢**：ghcr.io 在国内直连偶尔较慢，若 pull 卡住可走方式二在服务器本地构建（构建源已全部换国内镜像），或自配 Docker 镜像代理
+- 镜像标签：`latest`（main 最新）、`main`、`v1.2.3`（打 tag 时）、`sha-xxxxxxx`（精确回滚用）
+
+### 方式二：Docker Compose 服务器本地构建
+
+删掉 `docker-compose.prod.yml` 中 app 服务的 `image:` 行（或加 `--build`），其余同上：
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
 
 说明：
 
 - **国内构建源已内置**：镜像构建走 goproxy.cn（Go 模块）、npmmirror（npm）、阿里云镜像（alpine apk），国内服务器直接 `--build` 不会卡在依赖下载；服务器在海外时可用 `--build-arg GOPROXY_MIRROR=https://proxy.golang.org,direct --build-arg NPM_REGISTRY=https://registry.npmjs.org --build-arg ALPINE_MIRROR=https://dl-cdn.alpinelinux.org` 切回官方源
 - 镜像为多阶段构建（node 构建前端 → go 构建后端并 embed → alpine 运行），约 53MB；服务器是 x86 时在 Mac（arm64）上需 `docker buildx build --platform linux/amd64`
+- CI 默认只构建 linux/amd64；需要 arm64 时把 workflow 中 platforms 改为 `linux/amd64,linux/arm64` 并启用 QEMU 步骤（构建时间约 3 倍）
+
+### 通用注意
+
 - 数据落两个 docker volume：`pgdata-prod`（库）与 `appdata`（上传素材/生成产物），`docker compose down` 不会丢；备份即备份这两个 volume
 - 防火墙/安全组只需放行 `APP_PORT`；PostgreSQL 不对宿主机暴露端口
 
-### 方式二：单二进制 + systemd
+### 方式三：单二进制 + systemd
 
 ```bash
 # 本机交叉编译（含前端）
