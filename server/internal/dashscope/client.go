@@ -65,6 +65,8 @@ func (c *Client) doJSON(ctx context.Context, method, path string, headers map[st
 		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	// oss:// 临时链接必须带此头才会被服务端解析（缺失时报 "url scheme must be http/https"）
+	req.Header.Set("X-DashScope-OssResourceResolve", "enable")
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}

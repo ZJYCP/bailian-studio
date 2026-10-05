@@ -28,9 +28,9 @@ export default function FilePicker({
   const accept = acceptByType[spec.type] || '*/*'
 
   const upload = useMutation({
-    mutationFn: async (files: FileList) => {
+    mutationFn: async (files: File[]) => {
       const added: Asset[] = []
-      for (const f of Array.from(files)) {
+      for (const f of files) {
         added.push(await api.upload(f))
       }
       return added
@@ -56,7 +56,10 @@ export default function FilePicker({
         multiple={max > 1}
         className="hidden"
         onChange={(e) => {
-          if (e.target.files?.length) upload.mutate(e.target.files)
+          // e.target.files 是 input 的实时视图，value 重置后会被清空；
+          // 必须先快照成普通数组再交给异步的 mutate
+          const files = Array.from(e.target.files ?? [])
+          if (files.length) upload.mutate(files)
           e.target.value = ''
         }}
       />
